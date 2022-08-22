@@ -229,7 +229,7 @@ const std::string& md5::finalize(const std::uint8_t* data, std::size_t size) noe
     pads = !pads ? md5::block_size : pads;
 
     padding[0] = 0x80;
-    std::uint8_t shifts = 0;
+    std::size_t shifts = 0;
     std::uint64_t bit_size = _msglen * 8;
     for (std::size_t i = 0; i < 8; i++) {   // 0xffeebbaa99881100 -> 00118899aabbeeff
         padding[pads + i] = static_cast<std::uint8_t>(bit_size >> shifts);
