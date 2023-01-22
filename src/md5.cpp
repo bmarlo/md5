@@ -9,7 +9,7 @@ md5::md5() : _state{0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476}, _msglen(0)
     _hash.resize(md5::hash_size);
 }
 
-md5& md5::reset() noexcept
+md5& md5::clear() noexcept
 {
     _state[0] = 0x67452301;
     _state[1] = 0xefcdab89;
@@ -193,7 +193,7 @@ md5& md5::update(const std::uint8_t* data, std::size_t size) noexcept
     return *this;
 }
 
-const std::string& md5::finalize(const std::uint8_t* data, std::size_t size) noexcept
+const std::string& md5::finalize(const std::uint8_t* data, std::size_t size, std::uint8_t* dst) noexcept
 {
     _msglen += size;
     if (_hash.size() > md5::hash_size) {
@@ -271,16 +271,19 @@ const std::string& md5::finalize(const std::uint8_t* data, std::size_t size) noe
     offset = 0;
     for (std::size_t i = 0; i < 4; i++) {
         shifts = 0;
-        std::uint32_t val = _state[i];
+        auto word = _state[i];
         for (std::size_t k = 0; k < 4; k++) {
-            auto tmp = static_cast<std::uint8_t>(val >> shifts);
-            _hash[offset++] = static_cast<char>(hex_table[tmp >> 4]);
-            _hash[offset++] = static_cast<char>(hex_table[tmp & 0x0f]);
+            auto val = static_cast<std::uint8_t>(word >> shifts);
+            if (dst) {
+                *dst++ = val;
+            }
+            _hash[offset++] = static_cast<char>(hex_table[val >> 4]);
+            _hash[offset++] = static_cast<char>(hex_table[val & 0x0f]);
             shifts += 8;
         }
     }
 
-    reset();
+    clear();
     return _hash;
 }
 

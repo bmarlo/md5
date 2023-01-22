@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 namespace marlo {
@@ -8,11 +9,13 @@ class md5 {
 public:
     md5();
 
-    md5& reset() noexcept;
+    md5& clear() noexcept;
     md5& update(std::string_view bytes) noexcept;
     md5& update(const std::uint8_t* data, std::size_t size) noexcept;
-    const std::string& finalize(std::string_view bytes) noexcept;
-    const std::string& finalize(const std::uint8_t* data, std::size_t size) noexcept;
+    const std::string& finalize(std::string_view bytes, std::string& dst);
+    const std::string& finalize(std::string_view bytes, std::uint8_t* dst = nullptr) noexcept;
+    const std::string& finalize(const std::uint8_t* data, std::size_t size, std::string& dst);
+    const std::string& finalize(const std::uint8_t* data, std::size_t size, std::uint8_t* dst = nullptr) noexcept;
 
     static std::string eval(std::string_view bytes);
 
@@ -31,9 +34,23 @@ inline md5& md5::update(std::string_view bytes) noexcept
     return update(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size());
 }
 
-inline const std::string& md5::finalize(std::string_view bytes) noexcept
+inline const std::string& md5::finalize(std::string_view bytes, std::string& dst)
 {
-    return finalize(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size());
+    auto old_size = dst.size();
+    dst.resize(old_size + md5::bit_size / 8);
+    return finalize(bytes, reinterpret_cast<std::uint8_t*>(&dst[old_size]));
+}
+
+inline const std::string& md5::finalize(std::string_view bytes, std::uint8_t* dst) noexcept
+{
+    return finalize(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size(), dst);
+}
+
+inline const std::string& md5::finalize(const std::uint8_t* data, std::size_t size, std::string& dst)
+{
+    auto old_size = dst.size();
+    dst.resize(old_size + md5::bit_size / 8);
+    return finalize(data, size, reinterpret_cast<std::uint8_t*>(&dst[old_size]));
 }
 
 inline std::string md5::eval(std::string_view bytes)
